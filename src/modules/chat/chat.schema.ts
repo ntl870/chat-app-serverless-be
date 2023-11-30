@@ -3,7 +3,7 @@ import * as mongoose from 'mongoose';
 import { User } from '../user/user.schema';
 import { Message } from '../message/message.schema';
 
-@Schema()
+@Schema({ timestamps: true })
 export class Chat extends mongoose.Document {
   @Prop([{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }])
   members: User[];

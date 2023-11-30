@@ -12,10 +12,20 @@ import { Utils } from 'src/common/utils';
 
 @Injectable()
 export class AuthService {
+  private unAuthorizeDefaultPayload: {
+    isAuthorized: boolean;
+    payload: AuthPayloadDto;
+  };
+
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-  ) {}
+  ) {
+    this.unAuthorizeDefaultPayload = {
+      isAuthorized: false,
+      payload: null,
+    };
+  }
 
   async generateAuthTokenResponse(user: User) {
     const payload: AuthPayloadDto = {
@@ -58,5 +68,32 @@ export class AuthService {
 
   async isAuthorizedUser(email: string, pass: string): Promise<boolean> {
     return Boolean(await this.userService.findByEmailPassword(email, pass));
+  }
+
+  async authenticateToken(token: string): Promise<{
+    isAuthorized: boolean;
+    payload: AuthPayloadDto;
+  }> {
+    if (!token) return this.unAuthorizeDefaultPayload;
+
+    try {
+      const payload = await this.jwtService.verifyAsync<AuthPayloadDto>(token, {
+        secret: 'secretKey',
+      });
+
+      if (!payload) return this.unAuthorizeDefaultPayload;
+
+      const isAuthorized = await this.isAuthorizedUser(
+        payload.email,
+        payload.password,
+      );
+
+      return {
+        isAuthorized,
+        payload,
+      };
+    } catch {
+      return this.unAuthorizeDefaultPayload;
+    }
   }
 }

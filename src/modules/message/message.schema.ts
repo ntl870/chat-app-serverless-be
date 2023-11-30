@@ -2,7 +2,7 @@ import { Prop, Schema } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { User } from '../user/user.schema';
 
-@Schema()
+@Schema({ timestamps: true })
 export class Message extends mongoose.Document {
   @Prop()
   content: string;

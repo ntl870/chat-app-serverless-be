@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { SocketService } from './modules/socket/socket.service';
+import { SocketGateway } from './modules/socket/socket.gateway';
 
 @Injectable()
 export class AppService {
-  constructor(private readonly socketService: SocketService) {}
+  constructor(private readonly socketGateway: SocketGateway) {}
 
   getHello() {
-    this.socketService.emitEvent('message', 'Hello from server!');
+    this.socketGateway.emitEvent('message', '', 'Hello from server!');
     return 'aaa';
   }
 }

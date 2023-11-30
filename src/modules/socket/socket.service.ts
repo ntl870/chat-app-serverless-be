@@ -1,40 +1,36 @@
-import {
-  WebSocketGateway,
-  WebSocketServer,
-  SubscribeMessage,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Socket } from './socket.schema';
+import { Model } from 'mongoose';
+import { UserService } from '../user/user.service';
 
-@WebSocketGateway()
-export class SocketService implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer() private server: Server;
+@Injectable()
+export class SocketService {
+  constructor(
+    @InjectModel(Socket.name) private socketModel: Model<Socket>,
+    private readonly userService: UserService,
+  ) {}
 
-  handleConnection(client: any, ...args: any[]) {
-    console.log(args);
-    console.log(`Client connected: ${client.id}`);
+  async createSocketSession(userId: string, clientId: string) {
+    const user = await this.userService.findById(userId);
+
+    return await this.socketModel.create({
+      user,
+      clientId,
+    });
   }
 
-  handleDisconnect(client: any) {
-    console.log(`Client disconnected: ${client.id}`);
+  async removeSocketSession(clientId: string) {
+    return await this.socketModel.findOneAndDelete({
+      clientId,
+    });
   }
 
-  handleConnectionError(client: any, error: Error) {
-    console.error(`Error for client ${client.id}: ${error.message}`);
-  }
-
-  emitEvent<T>(event: string, data: T) {
-    this.server.emit(event, data);
-  }
-
-  onEvent<T>(event: string, callback: (data: T) => void) {
-    this.server.on(event, callback);
-  }
-
-  @SubscribeMessage('message')
-  handleMessage(client: any, payload: any): string {
-    console.log(`Message received from ${client.id}: ${payload}`);
-    return 'Hello from server!';
+  async getClientIdByUserId(userId: string) {
+    return await this.socketModel.find({
+      user: {
+        _id: userId,
+      },
+    });
   }
 }
